@@ -1,4 +1,3 @@
-
 import streamlit as st
 import boto3
 import json
@@ -20,7 +19,7 @@ client = session.client('bedrock-runtime')
 uploaded_file = st.file_uploader("上傳圖片", type=["jpg", "jpeg", "png"])
 if uploaded_file:
     image_bytes = uploaded_file.read()
-    st.image(image_bytes, caption="原始圖片", use_column_width=True)
+    st.image(image_bytes, caption="原始圖片", use_container_width=True)  # use_container_width 替代舊參數
 
     # 使用者輸入 mask 描述
     prompt = st.text_input("輸入要移除/取代的物件描述（英文）", "remove the person")
@@ -33,12 +32,13 @@ if uploaded_file:
         request = {
             "taskType": "INPAINT",
             "image": encoded_image,
-            "maskPrompt": prompt
+            "maskPrompt": prompt,
+            "imageFormat": "PNG"  # 建議明確指定
         }
 
-        # 呼叫 Bedrock 模型（範例以 Titan Image Inpainting 為例）
+        # 呼叫 Bedrock 模型（確保你使用支援 inpainting 的模型 ID）
         response = client.invoke_model(
-            modelId="amazon.titan-image-generator-v1",
+            modelId="amazon.titan-image-inpainting-v1",
             body=json.dumps(request),
             contentType="application/json",
             accept="application/json"
@@ -47,4 +47,5 @@ if uploaded_file:
         result = json.loads(response['body'].read())
         output_image = base64.b64decode(result["images"][0])
 
-        st.image(output_image, caption="處理後圖片", use_column_width=True)
+        st.image(output_image, caption="處理後圖片", use_container_width=True)
+
